@@ -1,7 +1,7 @@
 import './style.css';
 import { Game, type HudData, type Results } from './game/Game';
-import { loadSettings, saveSettings, type Quality, type Settings } from './game/Settings';
-import { accuracy, formatTime, MATCH_DURATION, SCORE_LIMIT } from './game/Rules';
+import { loadSettings, saveSettings, type Quality } from './game/Settings';
+import { accuracy, formatTime, SCORE_LIMIT } from './game/Rules';
 
 const el = <T extends HTMLElement = HTMLElement>(id:string):T => {
   const node=document.getElementById(id);if(!node)throw new Error(`Missing UI element #${id}`);return node as T;
@@ -136,4 +136,4 @@ el('settings-close').addEventListener('click',closeSettings);
 
 // WebGL failure is surfaced instead of leaving a blank page.
 window.addEventListener('error',event=>{console.error('ECHOFRONT error',event.error||event.message);});
-void MATCH_DURATION;void vignette;
+void vignette;

@@ -5,7 +5,7 @@ import { Input, Player } from './Player';
 import { World } from './World';
 import { Weapon } from './Weapon';
 import type { Settings } from './Settings';
-import { accuracy, formatTime, matchOver, MATCH_DURATION, newScore, registerDeath, registerKill, scoreXP, SCORE_LIMIT, type Score } from './Rules';
+import { formatTime, matchOver, MATCH_DURATION, newScore, registerDeath, registerKill, scoreXP, SCORE_LIMIT, type Score } from './Rules';
 
 export interface HudData {
   health:number; ammo:number; reserve:number; weapon:string; reloading:number;
