@@ -16,3 +16,8 @@ jobs:
       - run: npm install --no-audit --no-fund
       - run: npm test
       - run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: echofront-dist
+          path: dist/
+          if-no-files-found: error
