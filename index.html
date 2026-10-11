@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#08121e" />
+    <meta name="description" content="ECHOFRONT: Relay Nine — original browser first-person arena, playable offline against tactical drones." />
+    <title>ECHOFRONT // RELAY NINE</title>
+  </head>
+  <body>
+    <div id="viewport" aria-label="3D game arena"></div>
+    <div id="grain" aria-hidden="true"></div>
+    <div id="damage-vignette" aria-hidden="true"></div>
+    <div id="crosshair" aria-hidden="true"><i></i><i></i><i></i><i></i><b></b></div>
+    <div id="hitmarker" aria-hidden="true">✕</div>
+    <div id="hud" hidden>
+      <div class="hud-top">
+        <div class="top-brand"><span class="micro">ECHOFRONT / SIMULATION</span><strong>RELAY <em>NINE</em></strong></div>
+        <div class="top-center"><span id="match-label">FREE-FOR-ALL // DRONE TRIAL</span><div><strong id="match-time">05:00</strong><span id="match-score">00 / 25</span></div></div>
+        <div class="hud-net"><span class="status-dot"></span> LOCAL SESSION <span class="hud-fps" id="fps">60 FPS</span></div>
+      </div>
+      <div id="kill-feed" aria-live="polite"></div>
+      <div class="hud-bottom">
+        <div class="hud-left">
+          <div class="hud-caption">OPERATOR INTEGRITY</div>
+          <div class="vital-row"><strong id="health-number">100</strong><div class="health-track"><div id="health-fill"></div></div></div>
+          <div class="hud-keys">SHIFT SPRINT <span>·</span> CTRL SLIDE / CROUCH <span>·</span> SPACE JUMP</div>
+        </div>
+        <div class="hud-right">
+          <div class="hud-caption" id="weapon-name">ARC-7 / PULSE CARBINE</div>
+          <div class="ammo-line"><strong id="ammo-current">28</strong><span>/</span><b id="ammo-reserve">196</b></div>
+          <div class="hud-caption" id="weapon-state">AUTO • R TO RELOAD • 1 / 2 SWITCH</div>
+        </div>
+      </div>
+      <div id="minimap-wrap"><canvas id="minimap" width="176" height="176" aria-label="Map showing nearby obstacles and drones"></canvas><div>SCANNER / 40M</div></div>
+      <div id="center-alert" aria-live="polite"></div>
+      <div id="respawn" hidden><div>RECONSTRUCTING SIGNAL</div><strong id="respawn-seconds">3</strong></div>
+    </div>
+    <div id="menu" class="overlay">
+      <div class="menu-decoration"><div>FEED_009 / OFFLINE</div><div>37°N — SECTOR 09</div></div>
+      <div class="menu-main">
+        <div class="eyebrow"><span class="status-dot"></span> TACTICAL SIMULATION // BUILD 0.1</div>
+        <div class="brandmark">ECHO<span>FRONT</span><i>™</i></div>
+        <div class="brand-sub">R E L A Y &nbsp; N I N E</div>
+        <p class="menu-intro">A silent relay. A contested signal. Fight autonomous sentries across the abandoned spillway facility.</p>
+        <div class="menu-actions">
+          <button id="play-btn" class="btn-primary"><span>01</span> DEPLOY / DRONE TRIAL <b>↗</b></button>
+          <button id="settings-btn" class="btn-secondary"><span>02</span> OPTIONS & CONTROLS <b>⚙</b></button>
+          <button class="btn-secondary disabled" disabled title="Online rooms arrive in Phase 2"><span>03</span> MULTIPLAYER <small>PHASE 2</small></button>
+        </div>
+        <div class="record-strip"><div><span>PERSONAL BEST</span><strong id="personal-best">0 ELIMS</strong></div><div><span>TRIALS COMPLETED</span><strong id="trials-completed">0</strong></div><div><span>OPERATION</span><strong>SPILLWAY</strong></div></div>
+      </div>
+      <div class="menu-footer">ORIGINAL SCI-FI ARENA <span>•</span> NO DOWNLOAD REQUIRED <span>•</span> OFFLINE PRACTICE</div>
+    </div>
+    <div id="pause" class="overlay modal-overlay" hidden>
+      <div class="modal-panel"><div class="eyebrow">SIMULATION INTERRUPTED</div><h2>PAUSED</h2><p>Return to the relay when you're ready.</p>
+        <button id="resume-btn" class="btn-primary">RESUME OPERATION <b>↗</b></button>
+        <button id="pause-settings-btn" class="btn-secondary">OPTIONS & CONTROLS</button>
+        <button id="quit-btn" class="btn-secondary">ABORT TO MENU</button>
+      </div>
+    </div>
+    <div id="settings" class="overlay modal-overlay" hidden>
+      <div class="modal-panel settings-panel"><div class="eyebrow">SYSTEM CALIBRATION</div><h2>OPTIONS</h2>
+        <label>LOOK SENSITIVITY <strong id="sensitivity-display">0.20</strong><input id="sensitivity" type="range" min="0.08" max="0.50" step="0.01" /></label>
+        <label>FIELD OF VIEW <strong id="fov-display">80°</strong><input id="fov" type="range" min="65" max="105" step="1" /></label>
+        <label>MASTER AUDIO <strong id="volume-display">60%</strong><input id="volume" type="range" min="0" max="100" step="5" /></label>
+        <label>GRAPHICS QUALITY <select id="quality"><option value="low">LOW / PERFORMANCE</option><option value="medium">MEDIUM / BALANCED</option><option value="high">HIGH / DETAIL</option></select></label>
+        <label class="checkbox-line"><input id="motion" type="checkbox" /> REDUCED CAMERA MOTION</label>
+        <p class="control-list"><strong>CONTROLS</strong> WASD move · Mouse aim · Click fire · Right click aim · R reload · 1/2 switch · Shift sprint · Ctrl crouch / slide · Space jump · E vault · Tab scoreboard · Esc pause</p>
+        <button id="settings-close" class="btn-primary">APPLY & CLOSE <b>✓</b></button>
+      </div>
+    </div>
+    <div id="results" class="overlay modal-overlay" hidden>
+      <div class="modal-panel results-panel"><div class="eyebrow">AFTER ACTION / RELAY NINE</div><h2 id="results-title">TRIAL COMPLETE</h2><p id="results-detail">SIGNAL DISENGAGED</p>
+        <div class="result-stats"><div><span>ELIMINATIONS</span><strong id="r-kills">0</strong></div><div><span>LOSSES</span><strong id="r-deaths">0</strong></div><div><span>ACCURACY</span><strong id="r-accuracy">0%</strong></div></div>
+        <div class="result-stats"><div><span>BEST STREAK</span><strong id="r-streak">0</strong></div><div><span>TIME</span><strong id="r-time">0:00</strong></div><div><span>LOCAL XP</span><strong id="r-xp">+0</strong></div></div>
+        <button id="again-btn" class="btn-primary">REDEPLOY <b>↗</b></button><button id="results-menu-btn" class="btn-secondary">MAIN MENU</button>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
