@@ -1,4 +1,8 @@
 import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { AudioSystem } from './Audio';
 import { Bot } from './Bot';
 import { Input, Player } from './Player';
@@ -22,6 +26,7 @@ export interface Events {
   paused():void;
 }
 interface Trail { line:THREE.Line; duration:number; }
+interface Impact { points:THREE.Points; life:number; velocities:THREE.Vector3[]; }
 export class Game {
   readonly world=new World();
   readonly renderer:THREE.WebGLRenderer;
@@ -39,6 +44,8 @@ export class Game {
   private hudTimer=0;
   private fps=60;
   private trails:Trail[]=[];
+  private impacts:Impact[]=[];
+  private composer:EffectComposer|undefined;
   private raycaster=new THREE.Raycaster();
   private animationHandle=0;
   private noise=0;
@@ -47,13 +54,15 @@ export class Game {
     this.renderer=new THREE.WebGLRenderer({antialias:settings.quality!=='low',powerPreference:'high-performance',alpha:false});
     this.renderer.outputColorSpace=THREE.SRGBColorSpace;
     this.renderer.toneMapping=THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure=1.25;
+    this.renderer.toneMappingExposure=1.37;
     this.renderer.shadowMap.enabled=settings.quality!=='low';
     this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;
     container.appendChild(this.renderer.domElement);
     this.camera=new THREE.PerspectiveCamera(settings.fov,1,.075,180);
     this.camera.rotation.order='YXZ';this.camera.userData.baseFov=settings.fov;
     this.world.scene.add(this.camera);
+    this.world.art.setQuality(settings.quality);
+    this.configurePostProcessing();
     this.audio=new AudioSystem(settings.volume);
     this.player=new Player(this.camera,this.world.colliders);
     this.weapon=new Weapon(this.camera,this.audio);
@@ -66,28 +75,41 @@ export class Game {
     this.camera.position.set(27,18,41);this.camera.lookAt(0,3,0);
     this.previousFrame=performance.now();this.animationHandle=requestAnimationFrame(this.frame);
   }
+  private configurePostProcessing():void {
+    this.composer?.dispose();this.composer=undefined;
+    if(this.settings.quality!=='high')return;
+    this.composer=new EffectComposer(this.renderer);
+    this.composer.addPass(new RenderPass(this.world.scene,this.camera));
+    const bloom=new UnrealBloomPass(new THREE.Vector2(window.innerWidth,window.innerHeight),.32,.4,1.17);
+    this.composer.addPass(bloom);
+    this.composer.addPass(new OutputPass());
+  }
   private resize=():void=>{
     const width=window.innerWidth,height=window.innerHeight;
     this.renderer.setSize(width,height,false);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,this.settings.quality==='high'?2:this.settings.quality==='medium'?1.4:1));
     this.camera.aspect=width/height;this.camera.updateProjectionMatrix();
+    this.composer?.setPixelRatio(Math.min(window.devicePixelRatio||1,1.4));
+    this.composer?.setSize(width,height);
   };
   applySettings(settings:Settings):void{
     this.settings=settings;this.camera.userData.baseFov=settings.fov;
     this.camera.fov=settings.fov;this.camera.updateProjectionMatrix();this.audio.setVolume(settings.volume);
-    this.renderer.shadowMap.enabled=settings.quality!=='low';this.resize();
+    this.renderer.shadowMap.enabled=settings.quality!=='low';
+    this.world.art.setQuality(settings.quality);
+    this.configurePostProcessing();this.resize();
   }
   start():void{
     this.score=newScore();this.mode='playing';this.hudTimer=0;this.noise=0;
     this.player.yaw=0;this.player.place(new THREE.Vector3(0,0,33));
     for(const bot of this.bots) bot.respawn();
     this.weapon.reset();this.input.clear();this.input.setEnabled(true);this.input.lock();
-    this.audio.click();this.pushHud();
+    this.audio.startAmbience();this.audio.click();this.pushHud();
   }
   resume():void{if(this.mode!=='paused')return;this.mode='playing';this.input.setEnabled(true);this.input.lock();}
   pause():void{if(this.mode!=='playing')return;this.mode='paused';this.input.setEnabled(false);this.input.unlock();this.events.paused();}
   quit():void{
-    this.mode='menu';this.input.setEnabled(false);this.input.unlock();
+    this.mode='menu';this.audio.stopAmbience();this.input.setEnabled(false);this.input.unlock();
     this.camera.position.set(27,18,41);this.camera.lookAt(0,3,0);
   }
   private frame=(time:number):void=>{
@@ -101,7 +123,9 @@ export class Game {
       this.world.update(dt*.35);
     }
     this.updateTrails(dt);
-    this.renderer.render(this.world.scene,this.camera);
+    this.updateImpacts(dt);
+    if(this.composer)this.composer.render();
+    else this.renderer.render(this.world.scene,this.camera);
     this.fps+=((1/dt)-this.fps)*.06;
     this.animationHandle=requestAnimationFrame(this.frame);
   };
@@ -140,6 +164,7 @@ export class Game {
     const hits=this.raycaster.intersectObjects(all,false);
     const first=hits[0];
     const impact=first?.point.clone()??start.clone().addScaledVector(direction,100);
+    if(first)this.spark(impact.clone(),first.face?.normal?.clone().transformDirection(first.object.matrixWorld)??direction.clone().negate(),typeof first.object.userData.botId==='number');
     this.trail(start.clone().addScaledVector(direction,.6),impact.clone(),0x79e7e3,.12);
     if(first&&typeof first.object.userData.botId==='number'){
       const bot=this.bots[first.object.userData.botId as number];
@@ -168,6 +193,34 @@ export class Game {
     const material=new THREE.LineBasicMaterial({color,transparent:true,opacity:.65,depthWrite:false});
     const line=new THREE.Line(geometry,material);this.world.scene.add(line);this.trails.push({line,duration});
   }
+  private spark(point:THREE.Vector3,normal:THREE.Vector3,robot:boolean):void {
+    // Tiny non-graphic energy sparks, fading naturally. Never spawn physics/collision bodies.
+    const count=robot?19:11;
+    const positions=new Float32Array(count*3),velocities:THREE.Vector3[]=[];
+    for(let i=0;i<count;i++){
+      const v=normal.clone().multiplyScalar(1.8+Math.random()*3.1);
+      v.add(new THREE.Vector3((Math.random()-.5)*5,(Math.random()-.3)*4,(Math.random()-.5)*5));
+      velocities.push(v);
+      positions[i*3]=point.x;positions[i*3+1]=point.y;positions[i*3+2]=point.z;
+    }
+    const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(positions,3));
+    const mat=new THREE.PointsMaterial({color:robot?0x85fff0:0xffbc78,size:robot?.095:.065,transparent:true,opacity:.95,depthWrite:false});
+    const points=new THREE.Points(geo,mat);this.world.scene.add(points);
+    this.impacts.push({points,life:.29,velocities});
+  }
+  private updateImpacts(dt:number):void {
+    for(let i=this.impacts.length-1;i>=0;i--){
+      const impact=this.impacts[i];impact.life-=dt;
+      const pos=impact.points.geometry.attributes.position as THREE.BufferAttribute;
+      impact.velocities.forEach((v,j)=>{
+        pos.setXYZ(j,pos.getX(j)+v.x*dt,pos.getY(j)+v.y*dt,pos.getZ(j)+v.z*dt);
+        v.y-=dt*8;
+      });
+      pos.needsUpdate=true;
+      (impact.points.material as THREE.PointsMaterial).opacity=Math.max(0,impact.life/.29);
+      if(impact.life<=0){this.world.scene.remove(impact.points);impact.points.geometry.dispose();(impact.points.material as THREE.Material).dispose();this.impacts.splice(i,1);}
+    }
+  }
   private updateTrails(dt:number):void{
     for(let i=this.trails.length-1;i>=0;i--){
       const t=this.trails[i];t.duration-=dt;
@@ -185,11 +238,13 @@ export class Game {
   }
   private finish():void{
     if(this.mode!=='playing')return;
-    this.mode='finished';this.input.setEnabled(false);this.input.unlock();
+    this.mode='finished';this.audio.stopAmbience();this.input.setEnabled(false);this.input.unlock();
     this.events.results({score:{...this.score},xp:scoreXP(this.score),won:this.score.kills>=SCORE_LIMIT});
   }
   dispose():void{
     cancelAnimationFrame(this.animationHandle);window.removeEventListener('resize',this.resize);
-    this.input.dispose();this.bots.forEach(b=>b.dispose());this.weapon.dispose();this.audio.dispose();this.world.dispose();this.renderer.dispose();this.renderer.domElement.remove();
+    this.input.dispose();this.bots.forEach(b=>b.dispose());this.weapon.dispose();this.audio.dispose();
+    this.impacts.forEach(x=>{this.world.scene.remove(x.points);x.points.geometry.dispose();(x.points.material as THREE.Material).dispose();});
+    this.composer?.dispose();this.world.dispose();this.renderer.dispose();this.renderer.domElement.remove();
   }
 }

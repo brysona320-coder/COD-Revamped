@@ -21,6 +21,8 @@ export class Bot {
   private glow:THREE.MeshStandardMaterial;
   private head:THREE.Group;
   private spawnIndex:number;
+  private rotors:THREE.Mesh[]=[];
+  private legs:THREE.Group[]=[];
   constructor(readonly id:number,private world:World) {
     this.name=names[id%names.length];this.spawnIndex=(id+1)%this.world.spawnPoints.length;
     this.glow=new THREE.MeshStandardMaterial({color:id%2?0xffb57b:0x72e2df,emissive:id%2?0xf27636:0x21b7bd,emissiveIntensity:1.5,metalness:.45,roughness:.3});
@@ -42,6 +44,47 @@ export class Bot {
     add(new THREE.BoxGeometry(.13,.13,.25),this.glow,this.group,.45,1.37,-.80);
     const sensor = add(new THREE.TorusGeometry(.46,.03,5,20),this.glow,this.group,0,2.31,0);
     sensor.rotation.x=Math.PI/2;
+    // Multi-part original sentry chassis: segmented armor, hydraulics and stabilizing rotors.
+    const plate=new THREE.MeshStandardMaterial({color:id%2?0x9a806f:0x71848a,metalness:.85,roughness:.31});
+    const servo=new THREE.MeshStandardMaterial({color:0x101921,metalness:.55,roughness:.51});
+    const red=new THREE.MeshStandardMaterial({color:0x263a45,emissive:id%2?0xed814d:0x44d5c9,emissiveIntensity:.65,metalness:.62,roughness:.32});
+    const addDecor=(g:THREE.BufferGeometry,m:THREE.Material,x:number,y:number,z:number,parent=this.group):THREE.Mesh=>
+      add(g,m,parent,x,y,z);
+    // Faceted armor over the hitbox (not itself a collider) creates a premium robot silhouette.
+    const breast=addDecor(new THREE.CylinderGeometry(.48,.38,.47,6),plate,0,1.40,-.035);
+    breast.rotation.z=Math.PI/2;
+    addDecor(new THREE.BoxGeometry(.40,.045,.12),red,0,1.51,-.45);
+    addDecor(new THREE.BoxGeometry(.49,.25,.15),plate,0,1.85,.15);
+    // Stabilizer arms with power couplings and flight surfaces.
+    for(const side of [-1,1]){
+      const shoulder=addDecor(new THREE.SphereGeometry(.19,10,8),servo,side*.48,1.60,0);
+      shoulder.scale.set(1.0,.75,.95);
+      const arm=addDecor(new THREE.CylinderGeometry(.105,.14,.68,8),plate,side*.62,1.25,0);
+      arm.rotation.z=side*.23;
+      addDecor(new THREE.BoxGeometry(.27,.14,.39),servo,side*.68,.96,-.15);
+      addDecor(new THREE.BoxGeometry(.26,.035,.32),this.glow,side*.69,.97,-.35);
+      const nacelle=addDecor(new THREE.CylinderGeometry(.24,.25,.25,12),servo,side*.53,1.78,.44);
+      nacelle.rotation.x=Math.PI/2;
+      const rotor=addDecor(new THREE.TorusGeometry(.2,.042,8,16),this.glow,side*.53,1.78,.60);
+      rotor.rotation.x=Math.PI/2;this.rotors.push(rotor);
+      for(let rib=0;rib<3;rib++)addDecor(new THREE.BoxGeometry(.3,.09,.04),plate,side*.43,1.68+rib*.13,.37);
+      const hip=new THREE.Group();hip.position.set(side*.22,.84,0);this.group.add(hip);this.legs.push(hip);
+      addDecor(new THREE.CylinderGeometry(.145,.125,.50,9),plate,0,-.24,0,hip);
+      addDecor(new THREE.SphereGeometry(.15,8,7),servo,0,-.48,-.05,hip);
+      addDecor(new THREE.CylinderGeometry(.095,.125,.38,8),plate,0,-.60,-.07,hip);
+      addDecor(new THREE.BoxGeometry(.27,.12,.40),dark,0,-.82,-.15,hip);
+      addDecor(new THREE.BoxGeometry(.20,.06,.19),red,0,-.84,-.27,hip);
+    }
+    // Narrow sensor crown with individually readable glowing optics.
+    for(let k=0;k<3;k++){
+      const sensor=addDecor(new THREE.SphereGeometry(.065,8,7),this.glow,(k-1)*.145,2.04,-.254,this.head);
+      sensor.scale.set(1,.65,.35);
+    }
+    const antenna=addDecor(new THREE.CylinderGeometry(.027,.040,.43,6),plate,.20,2.48,.09);
+    antenna.rotation.z=-.18;
+    addDecor(new THREE.SphereGeometry(.07,7,7),this.glow,.24,2.72,.09);
+    // Painted faction identifier, intentionally independent from other games.
+    for(let line=0;line<3;line++)addDecor(new THREE.BoxGeometry(.055,.04,.015),this.glow,-.22+line*.075,1.25,-.465);
     this.world.scene.add(this.group);
     this.respawn();
   }
@@ -84,6 +127,8 @@ export class Bot {
       this.movePhase+=dt*speed*5;
     }
     this.group.position.copy(this.position);this.group.position.y+=Math.sin(this.movePhase)*.045;
+    this.rotors.forEach((r,k)=>{r.rotation.z+=dt*(8+k*2);});
+    this.legs.forEach((leg,k)=>{leg.rotation.x=Math.sin(this.movePhase+k*Math.PI)*.18;});
     if(player.alive){
       const direction=Math.atan2(player.position.x-this.position.x,player.position.z-this.position.z);
       this.group.rotation.y=direction+Math.PI;

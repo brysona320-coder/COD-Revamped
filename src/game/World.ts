@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { Obstacle } from './Physics';
+import { ArtDirection } from './ArtDirection';
 
 const palette = {
   steel: 0x253647, dark: 0x142534, concrete: 0x455763,
@@ -12,6 +13,7 @@ export class World {
   readonly spawnPoints: THREE.Vector3[] = [];
   readonly animated: { mesh: THREE.Object3D; speed: number }[] = [];
   private time = 0;
+  readonly art: ArtDirection;
 
   constructor() {
     this.scene.background = new THREE.Color(0x0b1927);
@@ -36,6 +38,7 @@ export class World {
     this.makeRelayCore();
     const spawn = [[-36,30],[35,29],[-34,-36],[34,-37],[0,32],[0,-36],[-37,0],[37,0]];
     for (const [x,z] of spawn) this.spawnPoints.push(new THREE.Vector3(x, 0, z));
+    this.art = new ArtDirection(this.scene, this.colliders);
   }
 
   private mat(color: number, metalness = 0.3, roughness = 0.7): THREE.MeshStandardMaterial {
@@ -204,9 +207,11 @@ export class World {
   }
   update(dt:number):void {
     this.time+=dt;
+    this.art.update(dt);
     this.animated.forEach(({mesh,speed},i)=>{mesh.rotation.y+=dt*speed;if(mesh.type==='Mesh'&&i%3===0)mesh.position.y+=Math.sin(this.time*1.8+i)*dt*.05;});
   }
   dispose():void {
+    this.art.dispose();
     this.scene.traverse((object)=>{
       const mesh=object as THREE.Mesh;
       if(mesh.geometry)mesh.geometry.dispose();
