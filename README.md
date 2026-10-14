@@ -79,3 +79,9 @@ This is a **Phase 1 playable foundation**, not a finished AAA game. No real onli
 ## Originality and privacy
 
 All map layout, branding, 3D shapes, HUD and synthesized sound are authored for ECHOFRONT. No copyrighted commercial shooter content is reused. Offline progress remains in the player's browser and is not verified online.
+
+## Cloudflare Workers target and multiplayer preservation
+
+The requested production hostname is `https://relay-zero-play.relay-zero.workers.dev`. **The code in this repository is an offline-practice frontend.** Its visual overhaul is ready to integrate, but this repo does not contain the deployed multiplayer server. Never replace a live Worker that hosts multiplayer with this standalone static frontend.
+
+See [`CLOUDFLARE_DEPLOY.md`](./CLOUDFLARE_DEPLOY.md) for the safe manual Cloudflare preview workflow, required GitHub Actions secrets and the steps to integrate these frontend files into the existing production Worker while preserving its API, WebSocket routes and Durable Objects.

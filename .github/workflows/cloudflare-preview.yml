@@ -1,0 +1,25 @@
+name: Deploy ECHOFRONT visual preview to Cloudflare Workers
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: echofront-cloudflare-preview
+  cancel-in-progress: false
+jobs:
+  deploy-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - run: npm test
+      - run: npm run build
+      - name: Deploy separate preview Worker (never replaces relay-zero-play)
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --config wrangler.preview.jsonc
