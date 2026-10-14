@@ -1,6 +1,20 @@
-# ECHOFRONT: RELAY NINE
+# ECHOFRONT: RELAY NINE — Cinematic Environment Update
 
-A small original first-person sci-fi arena that runs directly in your browser. **Phase 1: offline practice** against five autonomous sentry drones. No account or backend is necessary.
+An original first-person sci-fi arena that runs directly in your browser. This update adds an entirely original cinematic industrial art pass: layered procedural PBR-like materials, atmospheric sky, dense facility detailing, animated lighting, environmental dust, reflective ground accents, redesigned first-person weapons, more intricate autonomous sentries, energy impact effects, richer procedural audio, and an upgraded tactical HUD. **The bundled game is offline practice** against five autonomous sentry drones; no account or backend is necessary.
+
+
+## Visual update (v0.2)
+
+- Atmospheric procedural sky with a warm industrial sunset, graded haze, and distance fog.
+- Textured concrete, alloy and asphalt generated locally via Canvas, no remotely hosted images or copyrighted assets.
+- Modular industrial structures: maintenance shutters, vents, pipes, roof antennae, area signage, gantry lighting, road paint, drainage, puddles, and tiny instanced fixtures.
+- Redesigned procedural carbine/sidearm viewmodels, animated recoil/weapon sway, muzzle flashes, and reconstructed sentry robotics.
+- Transient energy-spark impacts and layered original synthesized weapon audio.
+- Low disables extra structural embellishments, Medium enables environment detailing, and High adds micro-details/particles and postprocessed bloom. Change this in Settings.
+- The gameplay coordinates, solid mesh hit testing, physics obstacles, player spawns and scoring rules remain unchanged. This update does not claim to add or test a multiplayer server.
+
+### Visual assets & performance
+All art in this update is generated in code. No external texture CDN or commercial game assets are required to play, and no free assets are embedded with unclear redistribution rights. High uses additional GPU render targets; choose Medium if the game drops below a comfortable frame rate.
 
 ## Play locally (developer workflow)
 

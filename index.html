@@ -10,6 +10,8 @@
   <body>
     <div id="viewport" aria-label="3D game arena"></div>
     <div id="grain" aria-hidden="true"></div>
+    <div id="cinematic-haze" aria-hidden="true"></div>
+    <div id="lens-overlay" aria-hidden="true"><span class="lens-nw"></span><span class="lens-ne"></span><span class="lens-sw"></span><span class="lens-se"></span></div>
     <div id="damage-vignette" aria-hidden="true"></div>
     <div id="crosshair" aria-hidden="true"><i></i><i></i><i></i><i></i><b></b></div>
     <div id="hitmarker" aria-hidden="true">✕</div>
@@ -19,6 +21,8 @@
         <div class="top-center"><span id="match-label">FREE-FOR-ALL // DRONE TRIAL</span><div><strong id="match-time">05:00</strong><span id="match-score">00 / 25</span></div></div>
         <div class="hud-net"><span class="status-dot"></span> LOCAL SESSION <span class="hud-fps" id="fps">60 FPS</span></div>
       </div>
+      <div class="tactical-tag">SATELLITE UPLINK  /  ZONE 09 — WEST QUADRANT</div>
+      <div class="aim-reticle-label">OPTICAL LINK ACTIVE <span>●</span></div>
       <div id="kill-feed" aria-live="polite"></div>
       <div class="hud-bottom">
         <div class="hud-left">
@@ -39,16 +43,21 @@
     <div id="menu" class="overlay">
       <div class="menu-decoration"><div>FEED_009 / OFFLINE</div><div>37°N — SECTOR 09</div></div>
       <div class="menu-main">
-        <div class="eyebrow"><span class="status-dot"></span> TACTICAL SIMULATION // BUILD 0.1</div>
+        <div class="eyebrow"><span class="status-dot"></span> TACTICAL SIMULATION // VISUAL UPDATE 0.2</div>
         <div class="brandmark">ECHO<span>FRONT</span><i>™</i></div>
         <div class="brand-sub">R E L A Y &nbsp; N I N E</div>
-        <p class="menu-intro">A silent relay. A contested signal. Fight autonomous sentries across the abandoned spillway facility.</p>
+        <p class="menu-intro">The last transmission ended here. Enter the floodlit industrial sector, reclaim Relay Nine, and outmaneuver adaptive sentry units.</p>
         <div class="menu-actions">
           <button id="play-btn" class="btn-primary"><span>01</span> DEPLOY / DRONE TRIAL <b>↗</b></button>
           <button id="settings-btn" class="btn-secondary"><span>02</span> OPTIONS & CONTROLS <b>⚙</b></button>
-          <button class="btn-secondary disabled" disabled title="Online rooms arrive in Phase 2"><span>03</span> MULTIPLAYER <small>PHASE 2</small></button>
+          <button class="btn-secondary disabled" disabled title="Online rooms arrive in Phase 2"><span>03</span> MULTIPLAYER <small>OFFLINE BUILD</small></button>
         </div>
         <div class="record-strip"><div><span>PERSONAL BEST</span><strong id="personal-best">0 ELIMS</strong></div><div><span>TRIALS COMPLETED</span><strong id="trials-completed">0</strong></div><div><span>OPERATION</span><strong>SPILLWAY</strong></div></div>
+      </div>
+      <div class="mission-card" aria-hidden="true">
+        <div class="eyebrow">MISSION INTELLIGENCE <b>009 / CLASSIFIED</b></div>
+        <div class="mission-card-map"><span class="map-north">N ↑</span><span class="map-ring"></span><span class="map-ping">✦</span><span class="map-bottom">RELAY NINE / OPERATIONS GRID</span></div>
+        <div class="mission-card-bottom"><b>SPILLWAY FACILITY</b><span>OPERATIONAL THREAT: ELEVATED</span></div>
       </div>
       <div class="menu-footer">ORIGINAL SCI-FI ARENA <span>•</span> NO DOWNLOAD REQUIRED <span>•</span> OFFLINE PRACTICE</div>
     </div>
@@ -64,7 +73,7 @@
         <label>LOOK SENSITIVITY <strong id="sensitivity-display">0.20</strong><input id="sensitivity" type="range" min="0.08" max="0.50" step="0.01" /></label>
         <label>FIELD OF VIEW <strong id="fov-display">80°</strong><input id="fov" type="range" min="65" max="105" step="1" /></label>
         <label>MASTER AUDIO <strong id="volume-display">60%</strong><input id="volume" type="range" min="0" max="100" step="5" /></label>
-        <label>GRAPHICS QUALITY <select id="quality"><option value="low">LOW / PERFORMANCE</option><option value="medium">MEDIUM / BALANCED</option><option value="high">HIGH / DETAIL</option></select></label>
+        <label>GRAPHICS QUALITY <select id="quality"><option value="low">LOW / PERFORMANCE</option><option value="medium">MEDIUM / BALANCED</option><option value="high">ULTRA / BLOOM + ATMOSPHERE</option></select></label>
         <label class="checkbox-line"><input id="motion" type="checkbox" /> REDUCED CAMERA MOTION</label>
         <p class="control-list"><strong>CONTROLS</strong> WASD move · Mouse aim · Click fire · Right click aim · R reload · 1/2 switch · Shift sprint · Ctrl crouch / slide · Space jump · E vault · Tab scoreboard · Esc pause</p>
         <button id="settings-close" class="btn-primary">APPLY & CLOSE <b>✓</b></button>
