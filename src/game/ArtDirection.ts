@@ -100,18 +100,14 @@ export class ArtDirection {
       if(!(mesh.geometry instanceof THREE.BoxGeometry || mesh.geometry instanceof THREE.PlaneGeometry))return;
       const material=mesh.material as THREE.MeshStandardMaterial;
       if(!material?.isMeshStandardMaterial || material.emissiveIntensity>.16)return;
-      const b=mesh.geometry as THREE.BoxGeometry;
-      const p=b.parameters;
-      if('height' in p && 'width' in p){
-        // Large structural materials only; glowing stripes, lettering and sensors stay untouched.
-        if('depth' in p && p.width>3 && p.height>2 && p.depth>2) {
-          material.map=p.height>6?concrete:steel;material.roughness=p.height>6?.84:.67;
-          material.needsUpdate=true;
-        } else if('depth' in p && p.width>12 && p.height<.06 && p.depth>10){
-          material.map=asphalt;material.roughness=.94;material.needsUpdate=true;
-        } else if(!('depth' in p) && p.width>100) {
-          material.map=asphalt;material.roughness=.98;material.needsUpdate=true;
-        }
+      const p=mesh.geometry.parameters as { width:number; height:number; depth?:number };
+      if(p.depth!==undefined && p.width>3 && p.height>2 && p.depth>2){
+        material.map=p.height>6?concrete:steel;material.roughness=p.height>6?.84:.67;
+        material.needsUpdate=true;
+      } else if(p.depth!==undefined && p.width>12 && p.height<.06 && p.depth>10){
+        material.map=asphalt;material.roughness=.94;material.needsUpdate=true;
+      } else if(p.depth===undefined && p.width>100){
+        material.map=asphalt;material.roughness=.98;material.needsUpdate=true;
       }
     });
   }
