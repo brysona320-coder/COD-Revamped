@@ -10,13 +10,15 @@ import { World } from './World';
 import { selectSpawn } from '../shared/Arena';
 import type { NetPlayer, ServerPacket } from '../shared/Protocol';
 import { Weapon } from './Weapon';
+import { BLADE_INDEX, GUN_GAME_ORDER, WEAPONS, gunGameWeapon, scoreLimit, type GameMode } from '../shared/Arsenal';
 import type { Settings } from './Settings';
-import { formatTime, matchOver, MATCH_DURATION, newScore, registerDeath, registerKill, scoreXP, SCORE_LIMIT, type Score } from './Rules';
+import { formatTime, matchOver, MATCH_DURATION, newScore, registerDeath, registerKill, scoreXP, type Score } from './Rules';
 
 export interface HudData {
   health:number; ammo:number; reserve:number; weapon:string; reloading:number;
   time:string; kills:number; deaths:number; aiming:boolean; respawn:number; fps:number;
   score:Score; playerX:number; playerZ:number; yaw:number; bots:readonly Bot[];
+  gameMode:GameMode;stage:number;limit:number;role:string;
 }
 export interface Results { score:Score; xp:number; won:boolean }
 export interface Events {
@@ -24,6 +26,7 @@ export interface Events {
   elimination(name:string):void;
   damage(amount:number):void;
   hit(kill:boolean):void;
+  rankUp?(name:string,stage:number):void;
   results(data:Results):void;
   paused():void;
   onlineFire?(weapon:number):void;
@@ -45,6 +48,8 @@ export class Game {
   readonly events:Events;
   score:Score=newScore();
   session:'practice'|'online'='practice';
+  gameMode:GameMode='ffa';
+  onlineStage=0;
   onlinePlayers:NetPlayer[]=[];
   onlineRemaining=300;
   onlineRound:'waiting'|'playing'|'finished'='waiting';
@@ -114,7 +119,8 @@ export class Game {
     this.world.art.setQuality(settings.quality);
     this.configurePostProcessing();this.resize();
   }
-  start():void{
+  start(mode:GameMode='ffa'):void{
+    this.gameMode=mode;this.onlineStage=0;
     this.session='practice';this.onlineId='';this.onlinePlayers=[];this.clearRemote();
     this.bots.forEach(b=>b.group.visible=true);
     this.score=newScore();this.mode='playing';this.hudTimer=0;this.noise=0;
@@ -122,11 +128,13 @@ export class Game {
     const start=selectSpawn(this.world.colliders,[],Math.floor(Math.random()*1000));
     this.player.place(new THREE.Vector3(start.x,0,start.z));
     for(const bot of this.bots) bot.respawn();
-    this.weapon.reset();this.input.clear();this.input.setEnabled(true);this.input.lock();
+    this.weapon.reset();if(mode==='gun-game')this.weapon.select(gunGameWeapon(0));this.input.clear();this.input.setEnabled(true);this.input.lock();
     this.audio.startAmbience();this.audio.click();this.pushHud();
   }
-  startOnline(self:NetPlayer):void{
-    this.start();
+  startOnline(self:NetPlayer,mode:GameMode):void{
+    this.start('ffa');
+    this.gameMode=mode;this.onlineStage=self.stage;
+    if(mode==='gun-game')this.weapon.select(gunGameWeapon(self.stage));
     this.session='online';this.onlineId=self.id;this.onlineRemaining=300;this.onlineRound='waiting';
     this.networkTimer=0;this.respawnRequested=false;
     this.bots.forEach(b=>b.group.visible=false);
@@ -134,9 +142,9 @@ export class Game {
     this.player.yaw=self.yaw;this.player.pitch=self.pitch;
     this.pushHud();
   }
-  setOnlineSnapshot(players:NetPlayer[],remaining:number,round:'waiting'|'playing'|'finished'):void{
+  setOnlineSnapshot(players:NetPlayer[],remaining:number,round:'waiting'|'playing'|'finished',mode:GameMode):void{
     if(this.session!=='online')return;
-    this.onlinePlayers=players;this.onlineRemaining=remaining;this.onlineRound=round;
+    this.onlinePlayers=players;this.onlineRemaining=remaining;this.onlineRound=round;this.gameMode=mode;
     const own=players.find(x=>x.id===this.onlineId);
     if(own){
       if(own.alive&&!this.player.alive){
@@ -147,6 +155,11 @@ export class Game {
         if(this.player.position.distanceTo(new THREE.Vector3(own.x,own.y,own.z))>2.2)this.player.position.set(own.x,own.y,own.z);
       }
       this.player.health=own.health;this.score.kills=own.kills;this.score.deaths=own.deaths;
+      if(this.gameMode==='gun-game'){
+        if(own.stage>this.onlineStage)this.events.rankUp?.(WEAPONS[gunGameWeapon(own.stage)].name,own.stage);
+        this.onlineStage=own.stage;
+        if(this.weapon.index!==gunGameWeapon(own.stage))this.weapon.select(gunGameWeapon(own.stage));
+      }
     }
     for(const p of players){
       if(p.id===this.onlineId)continue;
@@ -219,8 +232,13 @@ export class Game {
   private tick(dt:number):void{
     this.score.elapsed+=dt;
     this.world.update(dt);
-    if(this.input.isDown('Digit1')||this.input.wheel<0)this.weapon.select(0);
-    else if(this.input.isDown('Digit2')||this.input.wheel>0)this.weapon.select(1);
+    if(this.gameMode==='ffa'){
+      for(let n=0;n<WEAPONS.length;n++){
+        if(this.input.isDown('Digit'+(n+1))){this.weapon.select(n);break;}
+      }
+      if(this.input.isDown('KeyV'))this.weapon.select(BLADE_INDEX);
+      if(this.input.wheel)this.weapon.select((this.weapon.index+(this.input.wheel>0?1:-1)+WEAPONS.length)%WEAPONS.length);
+    }
     this.input.wheel=0;
     if(this.input.isDown('KeyR')&&this.weapon.reload()&&this.session==='online')this.events.onlineReload?.(this.weapon.index);
     const ads=this.input.aiming&&this.player.alive&&!this.player.sprinting;
@@ -240,7 +258,7 @@ export class Game {
       const safe=selectSpawn(this.world.colliders,enemies,Math.floor(Math.random()*1000));
       this.player.place(new THREE.Vector3(safe.x,0,safe.z));this.audio.click();
     }
-    if(this.session==='practice'&&matchOver(this.score)){this.finish();return;}
+    if(this.session==='practice'&&matchOver(this.score,scoreLimit(this.gameMode))){this.finish();return;}
     this.hudTimer-=dt;if(this.hudTimer<=0){this.hudTimer=.1;this.pushHud();}
   }
   private shoot():void{
@@ -251,13 +269,16 @@ export class Game {
     const up=new THREE.Vector3().setFromMatrixColumn(this.camera.matrixWorld,1);
     direction.addScaledVector(side,(Math.random()-.5)*spread*2).addScaledVector(up,(Math.random()-.5)*spread*2).normalize();
     const start=this.camera.position.clone();
-    this.raycaster.set(start,direction);this.raycaster.far=110;
+    this.raycaster.set(start,direction);this.raycaster.far=this.weapon.config.range;
     const all=[...this.world.solidMeshes,...this.bots.filter(b=>b.alive).flatMap(b=>b.hitMeshes)];
     const hits=this.raycaster.intersectObjects(all,false);
     const first=hits[0];
-    const impact=first?.point.clone()??start.clone().addScaledVector(direction,100);
+    const impact=first?.point.clone()??start.clone().addScaledVector(direction,this.weapon.config.range);
     if(first)this.spark(impact.clone(),first.face?.normal?.clone().transformDirection(first.object.matrixWorld)??direction.clone().negate(),typeof first.object.userData.botId==='number');
-    this.trail(start.clone().addScaledVector(direction,.6),impact.clone(),0x79e7e3,.12);
+    if(this.weapon.config.role!=='melee'){
+      const trailColor=this.weapon.config.role==='sniper'?0xffdca0:this.weapon.config.role==='smg'?0xb58cff:0x79e7e3;
+      this.trail(start.clone().addScaledVector(direction,.6),impact.clone(),trailColor,.12);
+    }
     if(first&&typeof first.object.userData.botId==='number'){
       const bot=this.bots[first.object.userData.botId as number];
       if(bot?.alive){
@@ -265,7 +286,13 @@ export class Game {
         const damage=Math.round(this.weapon.config.damage*(first.object.userData.hitPart==='head'?1.65:1));
         const killed=bot.takeDamage(damage);
         this.audio.hit();this.events.hit(killed);
-        if(killed){this.score=registerKill(this.score);this.audio.eliminate();this.events.elimination(bot.name);}
+        if(killed){
+          this.score=registerKill(this.score);this.audio.eliminate();this.events.elimination(bot.name);
+          if(this.gameMode==='gun-game'&&this.score.kills<GUN_GAME_ORDER.length){
+            const next=gunGameWeapon(this.score.kills);
+            this.weapon.select(next);this.events.rankUp?.(WEAPONS[next].name,this.score.kills);
+          }
+        }
       }
     }
     // Each press has a subtle aiming kick, without violent screen effects.
@@ -325,13 +352,16 @@ export class Game {
       weapon:`${this.weapon.config.name} / ${this.weapon.config.label}`,reloading:this.weapon.reloadProgress,
       time:this.session==='online'?formatTime(this.onlineRemaining):formatTime(MATCH_DURATION-this.score.elapsed),kills:this.score.kills,deaths:this.score.deaths,
       aiming:this.input.aiming&&this.player.alive,respawn:this.player.alive?0:Math.max(0,this.player.respawnTime),
-      fps:Math.round(this.fps),score:this.score,playerX:this.player.position.x,playerZ:this.player.position.z,
+      fps:Math.round(this.fps),score:this.score,
+      gameMode:this.gameMode,stage:this.session==='online'?this.onlineStage:Math.min(this.score.kills,GUN_GAME_ORDER.length-1),
+      limit:scoreLimit(this.gameMode),role:this.weapon.config.role,
+      playerX:this.player.position.x,playerZ:this.player.position.z,
       yaw:this.player.yaw,bots:this.session==='online'?[]:this.bots});
   }
   private finish():void{
     if(this.mode!=='playing')return;
     this.mode='finished';this.audio.stopAmbience();this.input.setEnabled(false);this.input.unlock();
-    this.events.results({score:{...this.score},xp:scoreXP(this.score),won:this.score.kills>=SCORE_LIMIT});
+    this.events.results({score:{...this.score},xp:scoreXP(this.score),won:this.score.kills>=scoreLimit(this.gameMode)});
   }
   dispose():void{
     cancelAnimationFrame(this.animationHandle);window.removeEventListener('resize',this.resize);
