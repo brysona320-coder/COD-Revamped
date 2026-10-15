@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { Obstacle } from './Physics';
+import { BUILDINGS, CONTAINERS, BARRICADES, TERMINALS, START_CANDIDATES, canSpawn } from '../shared/Arena';
 import { ArtDirection } from './ArtDirection';
 
 const palette = {
@@ -36,9 +37,9 @@ export class World {
     this.makeSkyline();
     this.makeDebris();
     this.makeRelayCore();
-    const spawn = [[-36,30],[35,29],[-34,-36],[34,-37],[0,32],[0,-36],[-37,0],[37,0]];
-    for (const [x,z] of spawn) this.spawnPoints.push(new THREE.Vector3(x, 0, z));
-    this.art = new ArtDirection(this.scene, this.colliders);
+    // Never place players or bots inside solid geometry. Include alternate clear lanes.
+    for(const [x,z] of START_CANDIDATES){if(canSpawn(x,z,this.colliders,.8))this.spawnPoints.push(new THREE.Vector3(x,0,z));}
+
   }
 
   private mat(color: number, metalness = 0.3, roughness = 0.7): THREE.MeshStandardMaterial {
@@ -86,20 +87,12 @@ export class World {
   }
   private makeFacility(): void {
     // Four dissimilar industrial structures form the main sightline and flank routes.
-    const buildings: Array<[number,number,number,number,number,number]> = [
-      [-25,-25,23,12,10,8], [25,-26,20,15,13,9],
-      [-25,23,21,14,9,7], [24,23,24,12,11,8],
-      [-13,14,10,12,8,5], [16,-13,11,10,10,7],
-    ];
+    const buildings=BUILDINGS;
     buildings.forEach(([x,z,w,d,h,i]) => this.building(x,z,w,d,h,i));
     // Core yard has an asymmetric loop of cover, not a copied competitive map.
-    const crates: Array<[number,number,number,number,number]> = [
-      [-8,-9,6,3,2.9], [7,11,7,3,3.5],[-16,-3,4,3,3.1],[17,6,5,4,2.5],
-      [-7,18,7,3,2.6],[10,-20,6,3,3.5],[-27,-1,4,6,2.5],[29,1,4,5,3.2],
-      [-9,-27,6,3,2.2],[6,27,5,4,2.8],[-17,35,8,3,2.9],[18,35,9,3,3.4]
-    ];
+    const crates=CONTAINERS;
     crates.forEach(([x,z,w,d,h],i) => this.container(x,z,w,d,h,i));
-    for (const [x,z] of [[-32,9],[32,-10],[-3,25],[3,-24],[-34,-10],[31,34]]) this.barricade(x,z);
+    for (const [x,z] of BARRICADES) this.barricade(x,z);
     // A suspended signal gantry with light strips and supporting columns.
     this.box(0,6.4,-7,23,0.7,2,0x334553);
     this.box(-11,3.2,-7,1,6.4,1,0x384c59,true);
@@ -107,7 +100,7 @@ export class World {
     this.box(0,6.83,-7,21,0.08,0.12,0,false,this.glow(palette.blue,1.8));
     this.box(0,8.1,-7,20,2,0.15,0x344a57);
     // Machinery and signal terminals.
-    for (const [x,z] of [[-39,-19],[37,16],[-13,-40],[13,40]]) this.signalTerminal(x,z);
+    for (const [x,z] of TERMINALS) this.signalTerminal(x,z);
   }
   private building(x:number,z:number,w:number,d:number,h:number,index:number): void {
     const color = [palette.steel,0x344552,0x4b5b63][index%3];
