@@ -16,6 +16,6 @@
     "@types/three": "^0.180.0",
     "typescript": "^5.9.3",
     "vite": "^7.1.12",
-    "@cloudflare/workers-types": "^4.20260901.0"
+    "@cloudflare/workers-types": "latest"
   }
 }
