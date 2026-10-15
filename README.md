@@ -3,6 +3,14 @@
 An original first-person sci-fi arena that runs directly in your browser. This update adds an entirely original cinematic industrial art pass: layered procedural PBR-like materials, atmospheric sky, dense facility detailing, animated lighting, environmental dust, reflective ground accents, redesigned first-person weapons, more intricate autonomous sentries, energy impact effects, richer procedural audio, and an upgraded tactical HUD. Includes offline practice and an online room mode backed by Cloudflare Durable Objects.
 
 
+## Arsenal & Gun Game upgrade (v0.4)
+
+- Seven **original, fictional sci-fi loadouts**: ARC-7 carbine, NIX-3 sidearm, VEIL-9 and VEX-5 SMGs, RIFT-12 marksman rail, GHOST-50 sniper, and SHARD-0 energy blade.
+- Distinct weapon silhouettes, aiming magnification, synthesized firing tones, effects, damage, cooldowns, and ranges. The long-range GHOST-50 has a custom full-screen optical HUD.
+- Offline **GUN GAME / 7-STAGE GAUNTLET**: each drone elimination advances the active loadout, with the energy blade as the final stage. First to seven eliminations wins.
+- Online room choices: classic FFA with the full arsenal, or Gun Game with an authoritative seven-stage progression. Mode is part of room join/invite and validated by the Cloudflare room server.
+- Mode-sensitive scoreboard, round limit, stage meter, next loadout, and elimination announcements. Match setup and multiplayer rooms retain their existing foundation.
+
 ## Visual update (v0.2)
 
 - Atmospheric procedural sky with a warm industrial sunset, graded haze, and distance fog.
@@ -45,11 +53,13 @@ The browser-only files are in `dist/`. Players just open the published page; the
 | Left Ctrl or C | Crouch; slide while sprinting |
 | Space / E | Jump / vault low cover |
 | R | Reload |
-| 1 / 2 / Mouse wheel | Swap between ARC-7 and NIX-3 |
+| 1–7 / Mouse wheel | Choose or cycle all seven loadouts in FFA |
+| V | Quickly equip SHARD-0 energy blade in FFA |
+| Gun Game | Each elimination automatically changes your loadout |
 | Tab (hold) | Live scoreboard |
 | Esc | Pause / release cursor |
 
-The game begins when you click **DEPLOY**. The browser will capture your pointer during play and release it on pause or match completion. Reach 25 drone eliminations or finish a five-minute session. Offline personal bests and total trial XP are stored only in your browser via `localStorage`.
+The game begins when you click **DEPLOY**. The browser will capture your pointer during play and release it on pause or match completion. Reach 25 drone eliminations in FFA, or progress through seven eliminations in Gun Game, before the five-minute timer ends. Offline personal bests and total trial XP are stored only in your browser via `localStorage`.
 
 ## GitHub Pages
 
@@ -64,7 +74,7 @@ Vite's `base: './'` uses relative output asset paths so the bundle works at both
 
 - One original industrial arena, Spillway 09, made from procedural meshes and generated materials (no third-party visual assets)
 - Pointer lock, WASD, sprint, crouch, sliding, jumping, low-cover vault, basic AABB collision
-- Fictional ARC-7 and NIX-3 weapons with ADS, recoil, ammo, switching, damage and reload times
+- Seven original fictional weapons, each with custom ADS, recoil, rate, effects, and ammo; a short-range energy blade
 - Five independently moving drone opponents with pathfinding, line of sight, damage, eliminations and respawns
 - Match score, timer, elimination feed, minimap, hit marker, health, ammo, result screen, local progression
 - Runtime synthesized effects, adjustable graphics quality, audio, look sensitivity, FOV and motion reduction
@@ -72,7 +82,7 @@ Vite's `base: './'` uses relative output asset paths so the bundle works at both
 
 ## Known limitations and future work
 
-This is a playable online FPS foundation, not a finished AAA commercial game. Character rigs, animations, collision, AI and lighting remain lightweight. Only one map and free-for-all mode are implemented. Browser-to-browser testing and network load/performance testing remain necessary before calling it production-ready. Graphics and frame rates vary by hardware; 60 FPS is not guaranteed.
+This is a playable online FPS foundation, not a finished AAA commercial game. Character rigs, animations, collision, AI and lighting remain lightweight. Only one map is implemented; free-for-all and Gun Game are available. Browser-to-browser testing and network load/performance testing remain necessary before calling it production-ready. Graphics and frame rates vary by hardware; 60 FPS is not guaranteed.
 
 **Implemented online foundation:** Shared client/server packets, room creation/joining, Cloudflare Durable Object room authority, server-side movement/combat checks, snapshots, interpolation, elimination feeds, automatic respawns and room-code invite links. Recommended next steps: latency smoothing, spectating, teams, more maps, real browser-to-browser stress testing and optional matchmaking.
 

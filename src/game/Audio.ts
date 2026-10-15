@@ -1,3 +1,4 @@
+import type { WeaponRole } from '../shared/Arsenal';
 // All sounds are generated at runtime — no copyrighted samples or network assets.
 export class AudioSystem {
   private context: AudioContext | null = null;
@@ -32,17 +33,23 @@ export class AudioSystem {
     }
     return this.shotNoise=buffer;
   }
-  fire(sidearm=false):void {
+  fire(role:WeaponRole='carbine'):void {
+    if(role==='melee'){
+      this.tone(780,155,.16,.085,'triangle');
+      this.tone(240,75,.19,.06,'sawtooth');
+      return;
+    }
+    const sidearm=role==='sidearm',smg=role==='smg',precision=role==='sniper'||role==='marksman';
     const ctx=this.get();if(!ctx||!this.output)return;
     const now=ctx.currentTime;
     // Original procedural transients combine synthetic metallic snap, lower impact and air hiss.
     const noise=ctx.createBufferSource();noise.buffer=this.noise(ctx);
-    const filter=ctx.createBiquadFilter();filter.type='bandpass';filter.frequency.value=sidearm?1400:930;filter.Q.value=.65;
-    const envelope=ctx.createGain();envelope.gain.setValueAtTime(sidearm?.26:.34,now);
-    envelope.gain.exponentialRampToValueAtTime(.0001,now+(sidearm?.18:.23));
+    const filter=ctx.createBiquadFilter();filter.type='bandpass';filter.frequency.value=precision?630:smg?1720:sidearm?1400:930;filter.Q.value=.65;
+    const envelope=ctx.createGain();envelope.gain.setValueAtTime(precision?.46:smg?.20:sidearm?.26:.34,now);
+    envelope.gain.exponentialRampToValueAtTime(.0001,now+(precision?.32:smg?.13:sidearm?.18:.23));
     noise.connect(filter);filter.connect(envelope);envelope.connect(this.output);
-    noise.start(now);noise.stop(now+.24);
-    this.tone(sidearm?470:205,sidearm?145:52,sidearm?.12:.22,sidearm?.105:.17,'sawtooth');
+    noise.start(now);noise.stop(now+(precision?.34:.24));
+    this.tone(precision?135:smg?380:sidearm?470:205,precision?36:smg?96:sidearm?145:52,precision?.30:smg?.12:sidearm?.12:.22,precision?.23:smg?.11:sidearm?.105:.17,'sawtooth');
     this.tone(sidearm?1100:830,220,.053,sidearm?.036:.025,'triangle');
   }
   startAmbience():void {

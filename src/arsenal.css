@@ -1,0 +1,30 @@
+/* ECHOFRONT // Arsenal edition. Fully original HUD and optic treatment. */
+:root{--gun-amber:#efbf89;--gun-violet:#b9a1ff;--gun-cyan:#8cf5ea}
+.gun-game-button{background:linear-gradient(110deg,#ffd6a4,#de9d69)!important;border-color:#f8d5a7!important;color:#181d2c!important;box-shadow:0 0 30px #edaa7c2b}
+.gun-game-button:hover{background:linear-gradient(110deg,#ffebc9,#fac795)!important}
+.gun-game-button span{color:#77512e!important}
+.gun-game-progress{position:absolute;left:50%;bottom:33px;transform:translateX(-50%);width:min(310px,32vw);min-width:210px;padding:14px 18px;background:linear-gradient(110deg,#0b2234ed,#152635d4);border:1px solid #a4e1da70;border-top:2px solid #eac18c;box-shadow:0 9px 50px #020b13b5;display:grid;gap:6px;text-align:center;backdrop-filter:blur(9px)}
+.gun-game-progress strong{font:800 15px/1.4 ui-monospace,monospace;letter-spacing:.14em;color:#fae3bf}
+.gun-game-progress span{font:10px/1.3 ui-monospace,monospace;letter-spacing:.12em;color:#a2ede5}
+.gun-game-meter{height:5px;background:#39505b;overflow:hidden}
+#gun-game-fill{height:100%;width:0;background:linear-gradient(90deg,#7ce3da,#ffca8f);box-shadow:0 0 11px #7df3e0;transition:width .25s}
+#scope-mask{display:none;position:absolute;inset:0;z-index:5;pointer-events:none;align-items:center;justify-content:center;overflow:hidden;background:radial-gradient(circle at center,transparent 0,transparent min(24vw,42vh),rgba(0,0,0,.98) min(24.5vw,42.5vh),#020609 min(42vw,60vh));}
+body.scoped #scope-mask{display:flex}
+body.scoped #crosshair{display:none!important}
+body.scoped .aim-reticle-label{display:none}
+.scope-field{position:relative;width:min(48vw,84vh);height:min(48vw,84vh);border:3px solid #182a37;border-radius:50%;box-shadow:inset 0 0 70px 20px #0008,0 0 0 6px #04090d;overflow:hidden;background:radial-gradient(circle at 50% 48%,transparent 35%,rgba(0,0,0,.35) 90%,rgba(0,0,0,.7) 100%);}
+.scope-field:before,.scope-field:after{content:'';position:absolute;inset:9%;border-radius:50%;border:1px dashed rgba(170,238,228,.13)}
+.scope-field:after{inset:32%;border-style:solid;border-color:#bfe8da1d}
+.scope-hair{position:absolute;background:#b8dcd2bb;box-shadow:0 0 6px #83dcca61}
+.scope-hair-h{height:1px;width:100%;top:50%;left:0}
+.scope-hair-v{width:1px;height:100%;top:0;left:50%}
+.scope-notch{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:8px;height:8px;border:1px solid #f5dfb3;border-radius:50%;box-shadow:0 0 12px #f5d69a8e}
+#online-menu select{display:block;width:100%;padding:13px 15px;margin-top:8px;border:1px solid #36576c;background:#0a202e;color:#dff6f2;letter-spacing:.08em}
+#online-menu select:focus{border-color:#8cf4e8;outline:1px solid #65b8ac}
+#center-alert{max-width:80vw;overflow:hidden;text-overflow:ellipsis}
+#weapon-name{color:#fff0d0!important;letter-spacing:.14em}
+#hud .hud-right{box-shadow:inset 0 0 30px #8bd3d30d,0 15px 40px #0003}
+.feed-item{animation:fadeIn .25s ease-out}
+@media(max-width:850px){.gun-game-progress{bottom:115px;min-width:175px;padding:8px 10px}.gun-game-progress strong{font-size:11px}.gun-game-progress span{font-size:8px}}
+@media(max-height:770px){.menu-main{top:50%}.menu-intro{margin:12px 0!important;line-height:1.5!important}.menu-actions{gap:7px}.menu-actions button{height:47px;min-height:47px}.record-strip{margin-top:12px!important;padding-top:11px!important}.scope-field{width:min(48vw,77vh);height:min(48vw,77vh)}}
+@media(prefers-reduced-motion:reduce){#gun-game-fill{transition:none}}
