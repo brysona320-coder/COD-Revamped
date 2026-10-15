@@ -17,7 +17,6 @@ export class Weapon {
   private lights:THREE.PointLight[]=[];
   private flashes: THREE.Group[]=[];
   private sway = 0;
-  private previousIndex=0;
   get config():WeaponConfig{return WEAPONS[this.index];}
   get isReloading():boolean{return this.reloadLeft>0;}
   get reloadProgress():number{return this.reloadLeft;}
@@ -171,7 +170,7 @@ export class Weapon {
   }
   select(index:number):void {
     if(index<0||index>=WEAPONS.length||(index===this.index&&this.groups[index]?.visible))return;
-    this.index=index;this.reloadLeft=0;this.shotCooldown=.16;this.previousIndex=index;this.triggerReleased=true;
+    this.index=index;this.reloadLeft=0;this.shotCooldown=.16;this.triggerReleased=true;
     this.groups.forEach((g,j)=>{g.visible=j===index;});this.audio.click();
   }
   reload():boolean {
