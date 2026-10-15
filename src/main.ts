@@ -1,4 +1,5 @@
 import './style.css';
+import './arsenal.css';
 import { Game, type HudData, type Results } from './game/Game';
 import { MultiplayerClient } from './game/Multiplayer';
 import { cleanName, cleanRoom, type NetPlayer, type GameMode } from './shared/Protocol';
