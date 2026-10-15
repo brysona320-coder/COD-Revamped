@@ -1,9 +1,10 @@
 import './style.css';
 import { Game, type HudData, type Results } from './game/Game';
 import { MultiplayerClient } from './game/Multiplayer';
-import { cleanName, cleanRoom, ONLINE_SCORE_LIMIT, type NetPlayer } from './shared/Protocol';
+import { cleanName, cleanRoom, type NetPlayer, type GameMode } from './shared/Protocol';
+import { GUN_GAME_ORDER, WEAPONS } from './shared/Arsenal';
 import { loadSettings, saveSettings, type Quality } from './game/Settings';
-import { accuracy, formatTime, SCORE_LIMIT } from './game/Rules';
+import { accuracy, formatTime } from './game/Rules';
 
 const el = <T extends HTMLElement = HTMLElement>(id:string):T => {
   const node=document.getElementById(id);if(!node)throw new Error(`Missing UI element #${id}`);return node as T;
@@ -73,9 +74,18 @@ function drawMap(data:HudData):void{
 function hud(data:HudData):void{
   text('health-number',Math.ceil(data.health));el('health-fill').style.width=`${data.health}%`;
   text('match-time',data.time);
-  text('match-score',`${String(data.kills).padStart(2,'0')} / ${game.session==='online'?ONLINE_SCORE_LIMIT:SCORE_LIMIT}`);
+  text('match-score',`${String(data.kills).padStart(2,'0')} / ${data.limit}`);
   text('weapon-name',data.weapon);text('ammo-current',data.ammo);text('ammo-reserve',data.reserve);
-  text('weapon-state',data.reloading>0?'RELOADING…':'R RELOAD · 1 / 2 SWITCH');
+  text('weapon-state',data.reloading>0?'RECHARGING…':data.gameMode==='gun-game'?'GUN GAME · ELIMINATE TO ADVANCE':data.role==='melee'?'CLOSE-RANGE ENERGY BLADE':'R RELOAD · 1–7 / WHEEL SWITCH · V BLADE');
+  if(data.role==='melee'){text('ammo-current','∞');text('ammo-reserve','BLADE');}
+  toggle('gun-game-progress',data.gameMode==='gun-game');
+  if(data.gameMode==='gun-game'){
+    const stage=Math.min(data.stage,GUN_GAME_ORDER.length-1)+1;
+    text('gun-game-stage',`STAGE ${stage} / ${GUN_GAME_ORDER.length}`);
+    text('gun-game-next',stage===GUN_GAME_ORDER.length?'FINAL ROUND · ENERGY BLADE':`NEXT: ${WEAPONS[GUN_GAME_ORDER[stage]].name}`);
+    el('gun-game-fill').style.width=`${(data.kills/data.limit)*100}%`;
+  }
+  document.body.classList.toggle('scoped',data.aiming&&data.role==='sniper');
   text('fps',`${Math.min(999,data.fps)} FPS`);
   toggle('respawn',data.respawn>0);
   if(data.respawn>0)text('respawn-seconds',Math.ceil(data.respawn));
@@ -90,19 +100,19 @@ function leaveOnline():void {
   net.close();net.id='';net.room='';wasOnline=false;lastOnlineRound='waiting';
   history.replaceState(null,'',window.location.pathname);
 }
-function start():void {
-  leaveOnline();showGame();el('kill-feed').replaceChildren();game.start();
-  text('match-label','FREE-FOR-ALL // DRONE TRIAL');
+function start(mode:GameMode='ffa'):void {
+  leaveOnline();showGame();el('kill-feed').replaceChildren();game.start(mode);
+  text('match-label',mode==='gun-game'?'GUN GAME // DRONE GAUNTLET':'FREE-FOR-ALL // DRONE TRIAL');
   text('net-status','LOCAL SESSION');toggle('round-banner',false);toggle('cursor-prompt',false);
-  alert('ESTABLISH UPLINK // ELIMINATE DRONES');
+  alert(mode==='gun-game'?'GUN GAME // 7 LOADOUTS. EACH ELIMINATION ADVANCES.':'ESTABLISH UPLINK // ELIMINATE DRONES');
 }
 function goMenu():void{
   leaveOnline();game.quit();menu.hidden=false;pause.hidden=true;resultsEl.hidden=true;settingsEl.hidden=true;
   onlineMenu.hidden=true;toggle('hud',false);board.hidden=true;toggle('cursor-prompt',false);showRecords();
 }
 function showResults(data:Results):void {
-  toggle('hud',false);pause.hidden=true;resultsEl.hidden=false;
-  text('results-title',data.won?'SIGNAL SECURED':'TRIAL COMPLETE');
+  toggle('hud',false);pause.hidden=true;resultsEl.hidden=false;document.body.classList.remove('scoped');
+  text('results-title',data.won?(game.gameMode==='gun-game'?'ARSENAL MASTERED':'SIGNAL SECURED'):'TRIAL COMPLETE');
   text('results-detail',data.won?'ELIMINATION THRESHOLD REACHED':'OPERATION WINDOW CLOSED');
   text('r-kills',data.score.kills);text('r-deaths',data.score.deaths);
   text('r-accuracy',`${accuracy(data.score)}%`);text('r-streak',data.score.bestStreak);
@@ -137,6 +147,7 @@ const game=new Game(el('viewport'),settings,{
   elimination(name){alert(`SIGNAL DISRUPTED +75 // ${name}`);addFeed(`YOU / ${name} ✕`);},
   damage(){const v=el('damage-vignette');v.classList.remove('pulse');void v.offsetWidth;v.classList.add('pulse');},
   hit(kill){const marker=el('hitmarker');marker.classList.remove('show','kill');void marker.offsetWidth;marker.classList.add('show');if(kill)marker.classList.add('kill');},
+  rankUp(name,stage){alert(`LOADOUT ${stage+1} UNLOCKED // ${name}`);addFeed(`LEVEL UP / ${name}`);},
   results(data){showResults(data);},
   paused(){toggle('pause',true);toggle('hud',false);toggle('cursor-prompt',false);},
   onlineFire(weapon){net.send({type:'fire',weapon});},
@@ -152,7 +163,7 @@ function renderScoreboard():void{
   if(game.session==='online'){
     const ranked=[...game.onlinePlayers].sort((a,b)=>b.kills-a.kills||a.deaths-b.deaths);
     for(const p of ranked){const row=document.createElement('div');row.className='online-score-row';
-      row.textContent=`${p.id===net.id?'▶ ':''}${p.name}     ${p.kills} ELIMS    ${p.deaths} LOSSES${!p.alive?' • RESPAWNING':''}`;
+      row.textContent=`${p.id===net.id?'▶ ':''}${p.name}     ${p.kills} ELIMS    ${p.deaths} LOSSES${game.gameMode==='gun-game'?` · STAGE ${p.stage+1}`:''}${!p.alive?' • RESPAWNING':''}`;
       rows.appendChild(row);
     }
     if(!ranked.length)rows.textContent='AWAITING OPERATORS';
@@ -164,9 +175,9 @@ window.addEventListener('keydown',e=>{
 });
 window.addEventListener('keyup',e=>{if(e.code==='Tab')board.hidden=true;});
 
-net.onWelcome=(self:NetPlayer)=>{
-  wasOnline=true;lastOnlineRound='waiting';showGame();el('kill-feed').replaceChildren();game.startOnline(self);
-  text('match-label',`ONLINE FFA // ROOM ${net.room}`);
+net.onWelcome=(self:NetPlayer,mode:GameMode)=>{
+  wasOnline=true;lastOnlineRound='waiting';showGame();el('kill-feed').replaceChildren();game.startOnline(self,mode);
+  text('match-label',`ONLINE ${mode==='gun-game'?'GUN GAME':'FFA'} // ROOM ${net.room}`);
   text('net-status',`ONLINE • ${net.room}`);
   history.replaceState(null,'',`${window.location.pathname}?room=${encodeURIComponent(net.room)}`);
   toggle('round-banner',true);
@@ -176,11 +187,11 @@ net.onWelcome=(self:NetPlayer)=>{
 };
 net.onSnapshot=packet=>{
   if(!wasOnline)return;
-  game.setOnlineSnapshot(packet.players,packet.remaining,packet.round);
+  game.setOnlineSnapshot(packet.players,packet.remaining,packet.round,packet.mode);
   const count=packet.players.length;
   text('net-status',`${count}/8 OPERATORS • ${net.room}`);
   if(packet.round!==lastOnlineRound){
-    if(packet.round==='playing'){alert('ROUND LIVE // ENGAGE');game.weapon.reset();}
+    if(packet.round==='playing'){alert('ROUND LIVE // ENGAGE');game.weapon.reset();if(packet.mode==='gun-game')game.weapon.select(GUN_GAME_ORDER[0]);}
     if(packet.round==='finished')alert('ROUND COMPLETE // NEXT ROUND SOON');
     lastOnlineRound=packet.round;
   }
@@ -208,6 +219,8 @@ function openOnlineMenu():void {
   menu.hidden=true;onlineMenu.hidden=false;onlineStatus.textContent='JOIN AN EXISTING ROOM OR CREATE ONE';
   const fromUrl=cleanRoom(new URLSearchParams(location.search).get('room')??'');
   if(fromUrl)el<HTMLInputElement>('room-code').value=fromUrl;
+  const inviteMode=new URLSearchParams(location.search).get('mode');
+  if(inviteMode==='gun-game')el<HTMLSelectElement>('room-mode').value='gun-game';
 }
 function connectOnline():void {
   const name=cleanName(el<HTMLInputElement>('operator-name').value);
@@ -216,11 +229,12 @@ function connectOnline():void {
   el<HTMLInputElement>('operator-name').value=name;
   try{localStorage.setItem('echofront.operator',name);}catch{/* optional */}
   onlineStatus.textContent='CONNECTING TO RELAY…';
-  net.connect(room,name);
+  net.connect(room,name,el<HTMLSelectElement>('room-mode').value as GameMode);
 }
 try{el<HTMLInputElement>('operator-name').value=cleanName(localStorage.getItem('echofront.operator')??'OPERATOR');}catch{/* optional */}
 const suggested=cleanRoom(new URLSearchParams(location.search).get('room')??'');
 if(suggested){el<HTMLInputElement>('room-code').value=suggested;}
+if(new URLSearchParams(location.search).get('mode')==='gun-game')el<HTMLSelectElement>('room-mode').value='gun-game';
 el('online-btn').addEventListener('click',openOnlineMenu);
 el('online-back').addEventListener('click',()=>{net.close();onlineMenu.hidden=true;menu.hidden=false;});
 el('online-join').addEventListener('click',connectOnline);
@@ -232,7 +246,7 @@ el('online-create').addEventListener('click',()=>{
 el('copy-room').addEventListener('click',()=>{
   const room=cleanRoom(el<HTMLInputElement>('room-code').value);
   if(room.length<3){onlineStatus.textContent='ENTER A ROOM CODE FIRST';return;}
-  const link=`${location.origin}${location.pathname}?room=${encodeURIComponent(room)}`;
+  const link=`${location.origin}${location.pathname}?room=${encodeURIComponent(room)}&mode=${el<HTMLSelectElement>('room-mode').value}`;
   void navigator.clipboard.writeText(link).then(()=>{onlineStatus.textContent='INVITE LINK COPIED';},()=>{onlineStatus.textContent=link;});
 });
 el('cursor-prompt').addEventListener('click',()=>game.input.lock());
@@ -240,10 +254,11 @@ document.addEventListener('pointerlockchange',()=>{
   if(game.mode==='playing')toggle('cursor-prompt',document.pointerLockElement!==game.renderer.domElement&&pause.hidden);
 });
 
-el('play-btn').addEventListener('click',start);
+el('play-btn').addEventListener('click',()=>start('ffa'));
+el('play-gungame-btn').addEventListener('click',()=>start('gun-game'));
 el('resume-btn').addEventListener('click',()=>{pause.hidden=true;toggle('hud',true);game.resume();});
 el('quit-btn').addEventListener('click',goMenu);
-el('again-btn').addEventListener('click',start);
+el('again-btn').addEventListener('click',()=>start(game.gameMode));
 el('results-menu-btn').addEventListener('click',goMenu);
 el('settings-btn').addEventListener('click',()=>openSettings('menu'));
 el('pause-settings-btn').addEventListener('click',()=>openSettings('pause'));
