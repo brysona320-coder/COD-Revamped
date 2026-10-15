@@ -70,3 +70,11 @@
 .round-banner{position:absolute;top:15%;left:50%;transform:translateX(-50%);border:1px solid #6fb5b973;padding:12px 22px;max-width:90vw;background:#061a29dc;text-align:center;color:#ffd9a7;font:700 11px/1.6 ui-monospace,monospace;letter-spacing:.13em;white-space:normal}
 .cursor-prompt{position:absolute;top:43%;left:50%;transform:translateX(-50%);pointer-events:auto;z-index:20;background:#8ce6dc;color:#09222f;border:2px solid #ffffff;padding:21px 32px;font-weight:900;letter-spacing:.07em;cursor:pointer;box-shadow:0 0 70px #000a}
 .online-score-row{padding:4px 8px;border-bottom:1px solid #274758;white-space:pre-wrap}
+
+/* Online room lobby and status elements */
+.online-panel{width:min(510px,94vw);max-height:92vh;overflow-y:auto}
+.online-panel label{display:block;margin:15px 0;font:700 11px/1.5 ui-monospace,monospace;letter-spacing:.14em;color:#b1ced0}
+.online-panel #online-status{margin:17px 0 8px}
+.online-panel .btn-primary,.online-panel .btn-secondary{min-height:46px}
+#online-menu{z-index:80}
+#cursor-prompt{font-family:ui-monospace,Consolas,monospace}

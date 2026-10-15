@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#08121e" />
-    <meta name="description" content="ECHOFRONT: Relay Nine — original browser first-person arena, playable offline against tactical drones." />
+    <meta name="description" content="ECHOFRONT: Relay Nine — original browser first-person arena with online multiplayer rooms and offline drone practice." />
     <title>ECHOFRONT // RELAY NINE</title>
   </head>
   <body>
@@ -19,7 +19,7 @@
       <div class="hud-top">
         <div class="top-brand"><span class="micro">ECHOFRONT / SIMULATION</span><strong>RELAY <em>NINE</em></strong></div>
         <div class="top-center"><span id="match-label">FREE-FOR-ALL // DRONE TRIAL</span><div><strong id="match-time">05:00</strong><span id="match-score">00 / 25</span></div></div>
-        <div class="hud-net"><span class="status-dot"></span> LOCAL SESSION <span class="hud-fps" id="fps">60 FPS</span></div>
+        <div class="hud-net"><span class="status-dot"></span> <span id="net-status">LOCAL SESSION</span> <span class="hud-fps" id="fps">60 FPS</span></div>
       </div>
       <div class="tactical-tag">SATELLITE UPLINK  /  ZONE 09 — WEST QUADRANT</div>
       <div class="aim-reticle-label">OPTICAL LINK ACTIVE <span>●</span></div>
@@ -38,19 +38,20 @@
       </div>
       <div id="minimap-wrap"><canvas id="minimap" width="176" height="176" aria-label="Map showing nearby obstacles and drones"></canvas><div>SCANNER / 40M</div></div>
       <div id="center-alert" aria-live="polite"></div>
+      <div id="round-banner" class="round-banner" role="status" aria-live="polite" hidden></div>
       <div id="respawn" hidden><div>RECONSTRUCTING SIGNAL</div><strong id="respawn-seconds">3</strong></div>
     </div>
     <div id="menu" class="overlay">
-      <div class="menu-decoration"><div>FEED_009 / OFFLINE</div><div>37°N — SECTOR 09</div></div>
+      <div class="menu-decoration"><div>FEED_009 / ONLINE ENABLED</div><div>37°N — SECTOR 09</div></div>
       <div class="menu-main">
-        <div class="eyebrow"><span class="status-dot"></span> TACTICAL SIMULATION // VISUAL UPDATE 0.2</div>
+        <div class="eyebrow"><span class="status-dot"></span> TACTICAL SIMULATION // ONLINE ARENA 0.3</div>
         <div class="brandmark">ECHO<span>FRONT</span><i>™</i></div>
         <div class="brand-sub">R E L A Y &nbsp; N I N E</div>
         <p class="menu-intro">The last transmission ended here. Enter the floodlit industrial sector, reclaim Relay Nine, and outmaneuver adaptive sentry units.</p>
         <div class="menu-actions">
           <button id="play-btn" class="btn-primary"><span>01</span> DEPLOY / DRONE TRIAL <b>↗</b></button>
           <button id="settings-btn" class="btn-secondary"><span>02</span> OPTIONS & CONTROLS <b>⚙</b></button>
-          <button class="btn-secondary disabled" disabled title="Online rooms arrive in Phase 2"><span>03</span> MULTIPLAYER <small>OFFLINE BUILD</small></button>
+          <button id="online-btn" class="btn-secondary" type="button"><span>03</span> MULTIPLAYER / ONLINE ROOMS <b>↗</b></button>
         </div>
         <div class="record-strip"><div><span>PERSONAL BEST</span><strong id="personal-best">0 ELIMS</strong></div><div><span>TRIALS COMPLETED</span><strong id="trials-completed">0</strong></div><div><span>OPERATION</span><strong>SPILLWAY</strong></div></div>
       </div>
@@ -59,7 +60,26 @@
         <div class="mission-card-map"><span class="map-north">N ↑</span><span class="map-ring"></span><span class="map-ping">✦</span><span class="map-bottom">RELAY NINE / OPERATIONS GRID</span></div>
         <div class="mission-card-bottom"><b>SPILLWAY FACILITY</b><span>OPERATIONAL THREAT: ELEVATED</span></div>
       </div>
-      <div class="menu-footer">ORIGINAL SCI-FI ARENA <span>•</span> NO DOWNLOAD REQUIRED <span>•</span> OFFLINE PRACTICE</div>
+      <div class="menu-footer">ORIGINAL SCI-FI ARENA <span>•</span> NO DOWNLOAD REQUIRED <span>•</span> ONLINE ROOMS + DRONE PRACTICE</div>
+    </div>
+    <button id="cursor-prompt" type="button" class="cursor-prompt" hidden>CLICK TO ENTER THE ARENA</button>
+    <div id="online-menu" class="overlay modal-overlay" hidden>
+      <div class="modal-panel online-panel">
+        <div class="eyebrow"><span class="status-dot"></span> LIVE CLOUD RELAY / ECHOFRONT</div>
+        <h2>ONLINE ARENA</h2>
+        <p>Create a private room or join your friends using the same room code. Up to eight operators per room; the match begins when two players connect.</p>
+        <label for="operator-name">OPERATOR NAME
+          <input id="operator-name" type="text" maxlength="18" autocomplete="nickname" placeholder="OPERATOR" />
+        </label>
+        <label for="room-code">ROOM CODE
+          <input id="room-code" type="text" maxlength="14" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="ENTER ROOM CODE" />
+        </label>
+        <div id="online-status" role="status" aria-live="polite">JOIN AN EXISTING ROOM OR CREATE ONE</div>
+        <button id="online-create" type="button" class="btn-primary">CREATE NEW ROOM <b>↗</b></button>
+        <button id="online-join" type="button" class="btn-secondary">JOIN ROOM <b>→</b></button>
+        <button id="copy-room" type="button" class="btn-secondary">COPY INVITE LINK <b>⧉</b></button>
+        <button id="online-back" type="button" class="btn-secondary">BACK TO MAIN MENU</button>
+      </div>
     </div>
     <div id="pause" class="overlay modal-overlay" hidden>
       <div class="modal-panel"><div class="eyebrow">SIMULATION INTERRUPTED</div><h2>PAUSED</h2><p>Return to the relay when you're ready.</p>
