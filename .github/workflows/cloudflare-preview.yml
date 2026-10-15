@@ -14,6 +14,27 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      # Fail before building when the Cloudflare integration has not been configured.
+      # Do not print token values or store them in the repository.
+      - name: Verify Cloudflare deployment secrets
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        shell: bash
+        run: |
+          missing=0
+          if [[ -z "$CLOUDFLARE_API_TOKEN" ]]; then
+            echo "::error::Missing GitHub Actions secret CLOUDFLARE_API_TOKEN. Add it under Settings > Secrets and variables > Actions > New repository secret."
+            missing=1
+          fi
+          if [[ -z "$CLOUDFLARE_ACCOUNT_ID" ]]; then
+            echo "::error::Missing GitHub Actions secret CLOUDFLARE_ACCOUNT_ID. Use your Cloudflare Account ID (not a zone ID)."
+            missing=1
+          fi
+          if [[ "$missing" -ne 0 ]]; then
+            echo "::error::See https://developers.cloudflare.com/workers/ci-cd/external-cicd/github-actions/ for setup instructions."
+            exit 1
+          fi
       - run: npm install --no-audit --no-fund
       - run: npm test
       - run: npm run build
