@@ -39,7 +39,8 @@ export class World {
     this.makeRelayCore();
     // Never place players or bots inside solid geometry. Include alternate clear lanes.
     for(const [x,z] of START_CANDIDATES){if(canSpawn(x,z,this.colliders,.8))this.spawnPoints.push(new THREE.Vector3(x,0,z));}
-
+    // Initialize the cinematic art pass after the map and collision geometry exist.
+    this.art = new ArtDirection(this.scene, this.colliders);
   }
 
   private mat(color: number, metalness = 0.3, roughness = 0.7): THREE.MeshStandardMaterial {
