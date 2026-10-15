@@ -71,14 +71,14 @@ export class ArtDirection {
 
   private createSky(): THREE.Mesh {
     const material = new THREE.ShaderMaterial({
-      side:THREE.BackSide,depthWrite:false,fog:false,
+      side:THREE.BackSide,depthWrite:false,fog:false,\n      uniforms:{uTime:{value:0}},
       vertexShader:`varying vec3 ray; void main(){ray=normalize(position); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); gl_Position.z=gl_Position.w;}`,
-      fragmentShader:`varying vec3 ray;
+      fragmentShader:`varying vec3 ray; uniform float uTime;
         float hash(vec3 p){return fract(sin(dot(p,vec3(12.9898,78.233,45.164)))*43758.5453);}
         void main(){ vec3 d=normalize(ray);float h=clamp(d.y*.5+.5,0.0,1.0);
           vec3 bottom=vec3(.26,.27,.29);vec3 haze=vec3(.48,.40,.36);vec3 high=vec3(.052,.115,.19);
           vec3 c=mix(bottom,haze,smoothstep(.13,.38,h));c=mix(c,high,smoothstep(.40,.92,h));
-          float cloud=sin(d.x*41.0+d.z*13.0+sin(d.z*14.0))*sin(d.x*27.0-d.z*32.0);
+          float cloud=sin(d.x*41.0+d.z*13.0+sin(d.z*14.0+uTime*.025))*sin(d.x*27.0-d.z*32.0+uTime*.019);
           c+=vec3(.10,.067,.053)*max(0.0,cloud)*smoothstep(.55,.15,abs(d.y));
           float halo=pow(max(0.0,dot(d,normalize(vec3(-.51,.27,-.73)))),17.0);
           float sun=pow(max(0.0,dot(d,normalize(vec3(-.51,.27,-.73)))),380.0);
@@ -209,6 +209,15 @@ export class ArtDirection {
     board.position.set(0,10.5,-8.12);this.detail.add(board);
     this.box(this.detail,-4.4,10.4,-8.03,.14,3.2,.17,steel);
     this.box(this.detail,4.4,10.4,-8.03,.14,3.2,.17,steel);
+    // Low-cost, original atmospheric light shafts. Purely cosmetic and collision-free.
+    // Use translucent geometry rather than expensive real-time volumetric ray marching.
+    const shaftMat=new THREE.MeshBasicMaterial({color:0x8ad8d0,transparent:true,opacity:.047,depthWrite:false,side:THREE.DoubleSide,blending:THREE.AdditiveBlending});
+    this.mats.push(shaftMat);
+    for(const [lx,lz] of [[-16,-7],[16,-7],[0,16],[0,-24],[-36,1],[36,1]] as const){
+      const shaft=new THREE.Mesh(new THREE.ConeGeometry(3.3,9.6,20,1,true),shaftMat);
+      shaft.position.set(lx,4.8,lz);shaft.rotation.z=Math.PI;
+      shaft.castShadow=false;shaft.receiveShadow=false;this.detail.add(shaft);
+    }
     // Suspended illuminated network links.
     for(const [x,z,c] of [[-12,-7,cyan],[12,-7,amber],[0,12,cyan],[0,-18,amber]] as const){
       const fixture=this.box(this.detail,x,4.2,z,2.2,.14,.44,deep);
@@ -298,7 +307,7 @@ export class ArtDirection {
     // The sky and surface textures remain enabled at all tiers; higher tiers add geometry.
   }
   update(dt:number):void {
-    this.time+=dt;
+    this.time+=dt;\n    (this.sky.material as THREE.ShaderMaterial).uniforms.uTime.value=this.time;
     for(const l of this.animatedLamps)l.light.intensity=5.5+Math.sin(this.time*1.4+l.offset)*.65;
     if(this.fine.visible&&this.motePositions&&this.motes){
       const p=this.motePositions;
