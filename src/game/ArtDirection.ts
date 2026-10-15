@@ -71,7 +71,8 @@ export class ArtDirection {
 
   private createSky(): THREE.Mesh {
     const material = new THREE.ShaderMaterial({
-      side:THREE.BackSide,depthWrite:false,fog:false,\n      uniforms:{uTime:{value:0}},
+      side:THREE.BackSide,depthWrite:false,fog:false,
+      uniforms:{uTime:{value:0}},
       vertexShader:`varying vec3 ray; void main(){ray=normalize(position); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); gl_Position.z=gl_Position.w;}`,
       fragmentShader:`varying vec3 ray; uniform float uTime;
         float hash(vec3 p){return fract(sin(dot(p,vec3(12.9898,78.233,45.164)))*43758.5453);}
@@ -307,7 +308,8 @@ export class ArtDirection {
     // The sky and surface textures remain enabled at all tiers; higher tiers add geometry.
   }
   update(dt:number):void {
-    this.time+=dt;\n    (this.sky.material as THREE.ShaderMaterial).uniforms.uTime.value=this.time;
+    this.time+=dt;
+    (this.sky.material as THREE.ShaderMaterial).uniforms.uTime.value=this.time;
     for(const l of this.animatedLamps)l.light.intensity=5.5+Math.sin(this.time*1.4+l.offset)*.65;
     if(this.fine.visible&&this.motePositions&&this.motes){
       const p=this.motePositions;
