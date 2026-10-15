@@ -9,7 +9,7 @@ export function registerKill(score: Score): Score {
 }
 export function registerDeath(score: Score): Score { return { ...score, deaths: score.deaths + 1, streak: 0 }; }
 export function accuracy(score: Score): number { return score.shots ? Math.round((score.hits / score.shots) * 100) : 0; }
-export function matchOver(score: Score): boolean { return score.kills >= SCORE_LIMIT || score.elapsed >= MATCH_DURATION; }
+export function matchOver(score: Score,limit = SCORE_LIMIT): boolean { return score.kills >= limit || score.elapsed >= MATCH_DURATION; }
 export function formatTime(seconds: number): string {
   const s = Math.max(0, Math.ceil(seconds)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 }
