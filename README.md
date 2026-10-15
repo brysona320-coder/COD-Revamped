@@ -1,6 +1,6 @@
 # ECHOFRONT: RELAY NINE — Cinematic Environment Update
 
-An original first-person sci-fi arena that runs directly in your browser. This update adds an entirely original cinematic industrial art pass: layered procedural PBR-like materials, atmospheric sky, dense facility detailing, animated lighting, environmental dust, reflective ground accents, redesigned first-person weapons, more intricate autonomous sentries, energy impact effects, richer procedural audio, and an upgraded tactical HUD. **The bundled game is offline practice** against five autonomous sentry drones; no account or backend is necessary.
+An original first-person sci-fi arena that runs directly in your browser. This update adds an entirely original cinematic industrial art pass: layered procedural PBR-like materials, atmospheric sky, dense facility detailing, animated lighting, environmental dust, reflective ground accents, redesigned first-person weapons, more intricate autonomous sentries, energy impact effects, richer procedural audio, and an upgraded tactical HUD. Includes offline practice and an online room mode backed by Cloudflare Durable Objects.
 
 
 ## Visual update (v0.2)
@@ -11,7 +11,7 @@ An original first-person sci-fi arena that runs directly in your browser. This u
 - Redesigned procedural carbine/sidearm viewmodels, animated recoil/weapon sway, muzzle flashes, and reconstructed sentry robotics.
 - Transient energy-spark impacts and layered original synthesized weapon audio.
 - Low disables extra structural embellishments, Medium enables environment detailing, and High adds micro-details/particles and postprocessed bloom. Change this in Settings.
-- The gameplay coordinates, solid mesh hit testing, physics obstacles, player spawns and scoring rules remain unchanged. This update does not claim to add or test a multiplayer server.
+- The arena coordinates remain unchanged; spawn positions now reject structures and score rules are kept consistent between practice and online play.
 
 ### Visual assets & performance
 All art in this update is generated in code. No external texture CDN or commercial game assets are required to play, and no free assets are embedded with unclear redistribution rights. High uses additional GPU render targets; choose Medium if the game drops below a comfortable frame rate.
@@ -72,9 +72,9 @@ Vite's `base: './'` uses relative output asset paths so the bundle works at both
 
 ## Known limitations and future work
 
-This is a **Phase 1 playable foundation**, not a finished AAA game. No real online multiplayer or Cloudflare backend exists in this phase. Multiplayer menu is accurately disabled. Character rigs, animations, collision, AI and lighting are lightweight. Bots use a grid planner and simple reaction logic rather than sophisticated cover selection. The health/damage model is intentionally non-graphic. Controller support, multiple maps, challenge modes and customization are planned for future phases. Graphics and actual frame rates vary by hardware; the 60-FPS target is not a guarantee.
+This is a playable online FPS foundation, not a finished AAA commercial game. Character rigs, animations, collision, AI and lighting remain lightweight. Only one map and free-for-all mode are implemented. Browser-to-browser testing and network load/performance testing remain necessary before calling it production-ready. Graphics and frame rates vary by hardware; 60 FPS is not guaranteed.
 
-**Phase 2 plan:** Share strict client/server message types, create a Cloudflare Worker + Durable Object room authority, validate movement and combat server-side, implement room creation/joining and snapshots, interpolation/reconciliation, match results, disconnect handling and browser-to-browser tests. `VITE_MULTIPLAYER_WS_URL` is currently an unused example variable; multiplayer must not be represented as functional before that work is done.
+**Implemented online foundation:** Shared client/server packets, room creation/joining, Cloudflare Durable Object room authority, server-side movement/combat checks, snapshots, interpolation, elimination feeds, automatic respawns and room-code invite links. Recommended next steps: latency smoothing, spectating, teams, more maps, real browser-to-browser stress testing and optional matchmaking.
 
 ## Originality and privacy
 
@@ -82,6 +82,11 @@ All map layout, branding, 3D shapes, HUD and synthesized sound are authored for 
 
 ## Cloudflare Workers target and multiplayer preservation
 
-The requested production hostname is `https://relay-zero-play.relay-zero.workers.dev`. **The code in this repository is an offline-practice frontend.** Its visual overhaul is ready to integrate, but this repo does not contain the deployed multiplayer server. Never replace a live Worker that hosts multiplayer with this standalone static frontend.
+The requested original production hostname is `https://relay-zero-play.relay-zero.workers.dev`. This repository now includes its own independent multiplayer Worker and Durable Object server. Its separately deployed preview Worker is `https://echofront-visual-preview.relay-zero.workers.dev`. Deployments to the preview must not overwrite the existing `relay-zero-play` Worker until its original multiplayer behavior has been compared and the migration is approved.
 
-See [`CLOUDFLARE_DEPLOY.md`](./CLOUDFLARE_DEPLOY.md) for the safe manual Cloudflare preview workflow, required GitHub Actions secrets and the steps to integrate these frontend files into the existing production Worker while preserving its API, WebSocket routes and Durable Objects.
+See [`CLOUDFLARE_DEPLOY.md`](./CLOUDFLARE_DEPLOY.md) for the preview workflow, secrets, worker routes and independent multiplayer server setup.
+
+## Online rooms (v0.3)
+
+The preview Worker hosts the static frontend and `/api/rooms/:code` WebSocket endpoints backed by a Durable Object per room. Two or more operators start a timed free-for-all. Server-side movement bounds, collision checks, weapon cooldowns, wall hits, spawn shielding and match scores are validated. Open **MULTIPLAYER**, choose a room code, and share the invite link. The server and UI are included in this repository. Play-test with two separate browsers in one room and check actual connection, movement, shooting, respawn and round restart behavior before treating it as production-ready.
+

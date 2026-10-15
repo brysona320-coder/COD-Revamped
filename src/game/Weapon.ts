@@ -77,8 +77,12 @@ export class Weapon {
     for(let j=0;j<10;j++)cube(0,.171,-.38+j*.048,.125,.023,.016,upper);
     const sight=cube(0,.23,-.10,.11,.095,.18,metalDark);
     sight.rotation.x=.03;
-    cube(0,.241,-.19,.061,.065,.012,emissive);
-    cube(0,.241,-.004,.052,.049,.012,black);
+    // Open optical sight, with aperture centred on the camera's ballistic axis in ADS.
+    // A solid glowing cube here used to cover the target and obscure aim.
+    const ring=add(new THREE.TorusGeometry(.041*scale,.006*scale,8,24),upper,0,.23*scale,-.13*scale);
+    ring.rotation.z=0;
+    add(new THREE.SphereGeometry(.008*scale,8,6),emissive,0,.23*scale,-.134*scale);
+    cube(0,.23,-.004,.073,.012,.014,black);
     cube(0,.09,.21,.23,.09,.14,upper);
     // Original geometric manufacturer and battery display panel.
     cube(.116,.032,.095,.012,.065,.20,emissive);
@@ -152,7 +156,9 @@ export class Weapon {
     const m=this.aimingBlend;
     const swayX=Math.sin(this.sway)*(.004+(moving?.007:0))*(1-m*.7);
     const swayY=Math.abs(Math.cos(this.sway))*(moving?.006:.002)*(1-m*.7);
-    group.position.set(.32*(1-m)+swayX,-.31*(1-m)-.203*m+this.recoil*.075+swayY,-.72*(1-m)-.49*m+this.recoil*.10);
+    // Each weapon's sight line moves to exact camera centre; no sight offset at full ADS.
+    const opticHeight=.23*(this.index===1?.78:1);
+    group.position.set(.32*(1-m)+swayX,-.31*(1-m)-opticHeight*m+this.recoil*.075+swayY,-.72*(1-m)-.49*m+this.recoil*.10);
     const reloadTilt=this.reloadLeft>0?Math.sin((1-this.reloadLeft/this.config.reloadTime)*Math.PI)*.25:0;
     group.rotation.set(this.recoil*.18+Math.sin(performance.now()*.0019)*(moving?.008:.003)+reloadTilt,-.10*(1-m),-.05*(1-m)+this.recoil*.075+reloadTilt*.45);
     const targetFov=aim?this.camera.userData.baseFov*.74:this.camera.userData.baseFov;

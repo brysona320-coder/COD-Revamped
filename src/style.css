@@ -62,3 +62,11 @@
 @media(max-width:1150px){.mission-card{display:none}.menu-main{left:7%;width:min(590px,90vw)}}
 @media(max-width:760px){.lens-nw,.lens-ne,.lens-sw,.lens-se{width:18px!important;height:18px!important}.tactical-tag,.aim-reticle-label{display:none}.hud-left{width:175px;padding:11px}.hud-right{min-width:unset;padding:11px}.hud-bottom{bottom:12px;left:12px;right:12px}.hud-caption{font-size:8px}.brandmark{font-size:13vw}.menu-main{top:51%}}
 @media(prefers-reduced-motion:reduce){.btn-primary,.btn-secondary,.feed-item{transition:none;animation:none}}
+
+/* Multiplayer room controls and in-round telemetry */
+#online-menu input{display:block;width:100%;padding:13px 15px;margin-top:8px;border:1px solid #36576c;background:#0a202e;color:#dff6f2;letter-spacing:.11em;outline-offset:3px}
+#online-menu input:focus{border-color:#8cf4e8;outline:1px solid #65b8ac}
+#online-status{min-height:24px;font:11px/1.5 ui-monospace,monospace;letter-spacing:.09em;color:#91e9e0}
+.round-banner{position:absolute;top:15%;left:50%;transform:translateX(-50%);border:1px solid #6fb5b973;padding:12px 22px;max-width:90vw;background:#061a29dc;text-align:center;color:#ffd9a7;font:700 11px/1.6 ui-monospace,monospace;letter-spacing:.13em;white-space:normal}
+.cursor-prompt{position:absolute;top:43%;left:50%;transform:translateX(-50%);pointer-events:auto;z-index:20;background:#8ce6dc;color:#09222f;border:2px solid #ffffff;padding:21px 32px;font-weight:900;letter-spacing:.07em;cursor:pointer;box-shadow:0 0 70px #000a}
+.online-score-row{padding:4px 8px;border-bottom:1px solid #274758;white-space:pre-wrap}
